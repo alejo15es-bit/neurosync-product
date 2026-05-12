@@ -1,22 +1,5 @@
 {
   "product_name": "NeuroSync Audio Kit",
   "price": 27,
-  "sessions": [
-    {
-      "title": "Morning Mental Reset",
-      "duration": "12 min",
-      "voice": "en-US-AriaNeural"
-    },
-    {
-      "title": "Work Focus Calm",
-      "duration": "10 min",
-      "voice": "en-US-AriaNeural"
-    },
-    {
-      "title": "Evening Digital Detox",
-      "duration": "15 min",
-      "voice": "en-US-AriaNeural"
-    }
-  ],
-  "pdf_content": "# 5-Minute Digital Anxiety Reset\n\n## WHEN TO USE THIS\n- After notification overload\n- Before important calls\n\n## PROTOCOL 1: The 4-7-8 Breath\n1. Sit tall, shoulders down\n2. Inhale through nose for 4 counts\n3. Hold breath for 7 counts\n4. Exhale slowly for 8 counts"
+  "pdf_content": "# 5-Minute Digital Anxiety Reset\n## Quick protocols for overwhelmed professionals\n\n### WHEN TO USE THIS\n- After notification overload\n- Before important calls\n- When chest feels tight from screens\n\n### PROTOCOL 1: The 4-7-8 Breath\n1. Sit tall, shoulders down\n2. Inhale through nose for 4 counts\n3. Hold breath for 7 counts\n4. Exhale slowly for 8 counts\n\n### PROTOCOL 2: Anchor Phrase\nChoose one phrase: \"I control my attention.\" Repeat 10x."
 }
