@@ -19,40 +19,43 @@ jobs:
       - name: Install edge-tts
         run: pip install edge-tts
       
+      - name: Create assets directory
+        run: mkdir -p assets
+      
       - name: Generate Session 1
         run: |
-          python -c "
+          python3 << 'EOF'
           import json
-          with open('config.json') as f:
+          with open('config.json', 'r') as f:
               config = json.load(f)
-          script = config['sessions'][0]['script'].replace('\n', ' ')
+          script = config['sessions'][0]['script'].replace('\n', ' ').replace('"', "'")
           with open('session1.txt', 'w') as f:
               f.write(script)
-          "
+          EOF
           edge-tts --voice en-US-AriaNeural --text-file session1.txt --write-media assets/neurosync_01_morning.mp3
       
       - name: Generate Session 2
         run: |
-          python -c "
+          python3 << 'EOF'
           import json
-          with open('config.json') as f:
+          with open('config.json', 'r') as f:
               config = json.load(f)
-          script = config['sessions'][1]['script'].replace('\n', ' ')
+          script = config['sessions'][1]['script'].replace('\n', ' ').replace('"', "'")
           with open('session2.txt', 'w') as f:
               f.write(script)
-          "
+          EOF
           edge-tts --voice en-US-AriaNeural --text-file session2.txt --write-media assets/neurosync_02_work.mp3
       
       - name: Generate Session 3
         run: |
-          python -c "
+          python3 << 'EOF'
           import json
-          with open('config.json') as f:
+          with open('config.json', 'r') as f:
               config = json.load(f)
-          script = config['sessions'][2]['script'].replace('\n', ' ')
+          script = config['sessions'][2]['script'].replace('\n', ' ').replace('"', "'")
           with open('session3.txt', 'w') as f:
               f.write(script)
-          "
+          EOF
           edge-tts --voice en-US-AriaNeural --text-file session3.txt --write-media assets/neurosync_03_evening.mp3
       
       - name: Upload Audio Artifacts
@@ -66,40 +69,43 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Create PDF
+      - name: Install wkhtmltopdf
         run: |
+          sudo apt-get update
           sudo apt-get install -y wkhtmltopdf
-          python -c "
+      
+      - name: Create PDF Guide
+        run: |
+          python3 << 'EOF'
           import json
-          with open('config.json') as f:
+          
+          with open('config.json', 'r') as f:
               config = json.load(f)
-          with open('guide.md', 'w') as f:
-              f.write(config['pdf_content'])
-          "
-          # Convertir markdown a HTML simple
-          python -c "
-          with open('guide.md') as f:
-              content = f.read()
-          html = '''
+          
+          html_content = """
           <!DOCTYPE html>
           <html>
           <head>
-          <meta charset=\"utf-8\">
+          <meta charset="utf-8">
+          <title>""" + config['product_name'] + """ - Guide</title>
           <style>
           body { font-family: Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; }
-          h1 { color: #667eea; }
+          h1 { color: #667eea; border-bottom: 2px solid #667eea; padding-bottom: 10px; }
           h2 { color: #764ba2; margin-top: 30px; }
-          .protocol { background: #f7fafc; padding: 15px; border-radius: 8px; margin: 15px 0; }
+          .protocol { background: #f7fafc; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #667eea; }
+          .warning { background: #fef5e7; padding: 10px; border-radius: 5px; margin: 10px 0; }
           </style>
           </head>
           <body>
-          ''' + content.replace('\\n', '<br>').replace('# ', '<h1>').replace('## ', '<h2>').replace('- ', '<li>').replace('**', '<b>').replace('**', '</b>') + '''
+          """ + config['pdf_content'].replace('\n', '<br>').replace('# ', '<h1>').replace('## ', '<h2>').replace('- ', '• ') + """
           </body>
           </html>
-          '''
+          """
+          
           with open('guide.html', 'w') as f:
-              f.write(html)
-          "
+              f.write(html_content)
+          EOF
+          
           wkhtmltopdf guide.html assets/neurosync_guide.pdf
       
       - name: Upload PDF Artifact
@@ -121,63 +127,67 @@ jobs:
       
       - name: Create landing page
         run: |
-          python -c "
+          python3 << 'EOF'
           import json
-          with open('config.json') as f:
+          
+          with open('config.json', 'r') as f:
               config = json.load(f)
           
-          html = '''<!DOCTYPE html>
-<html lang=\"en\">
+          price = config['price']
+          product_name = config['product_name']
+          
+          html = f"""<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset=\"UTF-8\">
-  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
-  <title>''' + config['product_name'] + ''' - Digital Wellness</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{product_name} - Digital Wellness</title>
   <style>
-    :root{--primary:#667eea;--secondary:#764ba2;--accent:#fbbf24}
-    *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6}
-    .hero{text-align:center;padding:4rem 2rem;background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff}
-    .hero h1{font-size:2.5rem;margin-bottom:1rem}
-    .btn{display:inline-block;padding:1rem 2.5rem;background:var(--accent);color:#1a202c;text-decoration:none;border-radius:10px;font-weight:700;margin:1rem}
-    .section{padding:3rem 2rem;max-width:800px;margin:0 auto}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.5rem;margin:2rem 0}
-    .card{padding:1.5rem;background:#f7fafc;border-radius:12px;border-left:4px solid var(--primary)}
-    .price{text-align:center;padding:2rem;background:#f7fafc;border-radius:12px;margin:2rem 0}
-    .price-amount{font-size:3rem;color:var(--primary);font-weight:800}
+    :root{{--primary:#667eea;--secondary:#764ba2;--accent:#fbbf24}}
+    *{{margin:0;padding:0;box-sizing:border-box}}
+    body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6}}
+    .hero{{text-align:center;padding:4rem 2rem;background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff}}
+    .hero h1{{font-size:2.5rem;margin-bottom:1rem}}
+    .btn{{display:inline-block;padding:1rem 2.5rem;background:var(--accent);color:#1a202c;text-decoration:none;border-radius:10px;font-weight:700;margin:1rem}}
+    .section{{padding:3rem 2rem;max-width:800px;margin:0 auto}}
+    .grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.5rem;margin:2rem 0}}
+    .card{{padding:1.5rem;background:#f7fafc;border-radius:12px;border-left:4px solid var(--primary)}}
+    .price{{text-align:center;padding:2rem;background:#f7fafc;border-radius:12px;margin:2rem 0}}
+    .price-amount{{font-size:3rem;color:var(--primary);font-weight:800}}
   </style>
 </head>
 <body>
-  <section class=\"hero\">
-    <h1>🔥 ''' + config['product_name'] + '''</h1>
+  <section class="hero">
+    <h1>🔥 {product_name}</h1>
     <p>Reset Your Digital Mind in Just 12 Minutes</p>
-    <a href=\"#download\" class=\"btn\">Get Instant Access - $''' + str(config['price']) + '''</a>
+    <a href="#download" class="btn">Get Instant Access - ${price}</a>
   </section>
   
-  <section class=\"section\">
+  <section class="section">
     <h2>What You Get</h2>
-    <div class=\"grid\">
-      <div class=\"card\"><h3>🎧 3 Audio Sessions</h3><p>Morning Reset • Work Focus • Evening Detox</p></div>
-      <div class=\"card\"><h3>📄 Quick Guide PDF</h3><p>5-minute emergency protocols</p></div>
-      <div class=\"card\"><h3>♾️ Lifetime Access</h3><p>Download once, use forever</p></div>
+    <div class="grid">
+      <div class="card"><h3>🎧 3 Audio Sessions</h3><p>Morning Reset • Work Focus • Evening Detox</p></div>
+      <div class="card"><h3>📄 Quick Guide PDF</h3><p>5-minute emergency protocols</p></div>
+      <div class="card"><h3>♾️ Lifetime Access</h3><p>Download once, use forever</p></div>
     </div>
   </section>
   
-  <section class=\"section price\" id=\"download\">
-    <p class=\"price-amount">$''' + str(config['price']) + '''</p>
+  <section class="section price" id="download">
+    <p class="price-amount">${price}</p>
     <p>One payment • Forever access</p>
-    <p style=\"margin-top:1rem;color:#718096;font-size:0.9rem\">
+    <p style="margin-top:1rem;color:#718096;font-size:0.9rem">
       <b>Note:</b> To purchase, visit:<br>
-      <a href=\"https://gumroad.com\" style=\"color:var(--primary)\">Gumroad.com</a> or 
-      <a href=\"https://ko-fi.com\" style=\"color:var(--primary)\">Ko-fi.com</a><br>
-      Search: \"''' + config['product_name'] + '''\"
+      <a href="https://gumroad.com" style="color:var(--primary)">Gumroad.com</a> or 
+      <a href="https://ko-fi.com" style="color:var(--primary)">Ko-fi.com</a><br>
+      Search: "{product_name}"
     </p>
   </section>
 </body>
-</html>'''
+</html>"""
           
           with open('index.html', 'w') as f:
               f.write(html)
-          "
+          EOF
       
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
@@ -188,5 +198,7 @@ jobs:
       
       - name: Show deployment URL
         run: |
+          REPO_NAME=$(basename ${{ github.repository }})
           echo "✅ Landing page deployed!"
-          echo "🔗 URL: https://${{ github.repository_owner }}.github.io/$(basename ${{ github.repository }})"
+          echo "🔗 URL: https://${{ github.repository_owner }}.github.io/$REPO_NAME"
+          echo "::notice::Visit: https://${{ github.repository_owner }}.github.io/$REPO_NAME"
