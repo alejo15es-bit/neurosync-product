@@ -1,20 +1,24 @@
 #!/usr/bin/env python3
 import json
 import os
-import subprocess
-import time
+import edge_tts
+import asyncio
 
-# 1. Crear directorio de assets
-os.makedirs('assets', exist_ok=True)
+# Obtener directorio base
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ASSETS_DIR = os.path.join(BASE_DIR, 'assets')
 
-# 2. Cargar configuración
-with open('config.json', 'r') as f:
+# Crear directorio de assets
+os.makedirs(ASSETS_DIR, exist_ok=True)
+
+# Cargar configuración
+with open(os.path.join(BASE_DIR, 'config.json'), 'r') as f:
     config = json.load(f)
 
 print(f"📦 Producto: {config['product_name']}")
 print(f"💰 Precio: ${config['price']}")
 
-# 3. GUIONES COMPLETOS
+# GUIONES COMPLETOS
 scripts = [
     "Welcome to NeuroSync. Session One: Morning Mental Reset. Before your phone buzzes with emails, this is your space. Just twelve minutes. Just you. Find a comfortable position. Shoulders away from your ears. Breathe in through your nose slowly... two... three... four... Hold gently... two... three... four... five... six... seven... Release through your mouth... two... three... four... five... six... seven... eight... Notice the space that just opened. I control my attention. Not the algorithm. Not the ping. End of Session One.",
 
@@ -23,36 +27,26 @@ scripts = [
     "NeuroSync. Session Three: Evening Digital Detox. The workday is done. But your mind is still scrolling. This is your disconnection ritual. Lie down comfortably. Breathe in through nose... two... three... four... Hold... two... three... four... five... six... seven... Out through mouth... two... three... four... five... six... seven... eight... Imagine unplugging from the digital world. Feel the freedom. I disconnect to reconnect. End of Session Three."
 ]
 
-# 4. Generar archivos y audio
+# Función asíncrona para generar audio
+async def generate_audio(text, voice, output_file):
+    communicate = edge_tts.Communicate(text, voice)
+    await communicate.save(output_file)
+
+# Generar archivos y audio
 for i, script_text in enumerate(scripts, 1):
-    txt_file = f'session{i}.txt'
-    mp3_file = f'assets/neurosync_0{i}_session.mp3'
+    txt_file = os.path.join(BASE_DIR, f'session{i}.txt')
+    mp3_file = os.path.join(ASSETS_DIR, f'neurosync_0{i}_session.mp3')
     
     # Escribir archivo de texto
     print(f"📝 Creando {txt_file}...")
     with open(txt_file, 'w', encoding='utf-8') as f:
         f.write(script_text)
     
-    # Verificar que se escribió
-    if os.path.getsize(txt_file) == 0:
-        print(f"❌ ERROR: {txt_file} está vacío")
-        exit(1)
-    
     print(f"🎙️ Generando audio {i} con edge-tts...")
     
-    # Ejecutar edge-tts y esperar a que termine
-    result = subprocess.run([
-        'edge-tts',
-        '--voice', 'en-US-AriaNeural',
-        '--text-file', txt_file,
-        '--write-media', mp3_file
-    ], capture_output=True, text=True)
+    # Generar audio usando la librería de Python
+    asyncio.run(generate_audio(script_text, "en-US-AriaNeural", mp3_file))
     
-    if result.returncode != 0:
-        print(f"❌ Error en edge-tts: {result.stderr}")
-        exit(1)
-    
-    # Verificar que se creó el MP3
     if os.path.exists(mp3_file):
         file_size = os.path.getsize(mp3_file)
         print(f"✅ Audio {i} creado: {mp3_file} ({file_size} bytes)")
@@ -60,7 +54,7 @@ for i, script_text in enumerate(scripts, 1):
         print(f"❌ ERROR: No se creó {mp3_file}")
         exit(1)
 
-# 5. Generar PDF HTML
+# Generar PDF HTML
 pdf_html = f"""<!DOCTYPE html>
 <html>
 <head>
@@ -97,7 +91,7 @@ with open('guide.html', 'w') as f:
     f.write(pdf_html)
 print("📄 HTML Guía generado")
 
-# 6. Generar Landing Page
+# Generar Landing Page
 landing_html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
