@@ -8,6 +8,8 @@ on:
 jobs:
   generate-all:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # Esto da permiso al robot para guardar cambios
     steps:
       - uses: actions/checkout@v4
       
@@ -25,23 +27,13 @@ jobs:
       - name: Run generation script
         run: python generate.py
       
-      - name: Upload all assets
-        uses: actions/upload-artifact@v4
-        with:
-          name: neurosync-complete-kit
-          path: |
-            assets/*.mp3
-            assets/*.pdf
-            index.html
+      - name: Create PDF from HTML
+        run: wkhtmltopdf guide.html assets/neurosync_guide.pdf
       
-      - name: Deploy landing to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: .
-          publish_branch: gh-pages
-      
-      - name: Show results
+      - name: Commit and Push changes to Main
         run: |
-          echo "✅ ¡Generación completada!"
-          echo "🌐 Landing: https://${{ github.repository_owner }}.github.io/$(basename ${{ github.repository }})"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Update generated assets [skip ci]" || echo "No changes to commit"
+          git push
