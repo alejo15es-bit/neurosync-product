@@ -2,86 +2,63 @@
 import json
 import os
 import subprocess
+import time
 
 # 1. Crear directorio de assets
 os.makedirs('assets', exist_ok=True)
 
-# 2. Cargar configuración (solo metadata)
+# 2. Cargar configuración
 with open('config.json', 'r') as f:
     config = json.load(f)
 
 print(f"📦 Producto: {config['product_name']}")
 print(f"💰 Precio: ${config['price']}")
 
-# 3. DEFINIR GUIONES AQUÍ (Seguro, sin problemas de JSON)
+# 3. GUIONES COMPLETOS
 scripts = [
-    """Welcome to NeuroSync. Session One: Morning Mental Reset.
-    
-    Before your phone buzzes with emails, before Slack notifications pile up, this is your space. Just twelve minutes. Just you.
-    
-    If your mind feels like a browser with too many tabs open, you're not broken. You're human in an inhuman pace. Let's reset.
-    
-    Find a comfortable position. Shoulders away from your ears. Jaw unclenched. 
-    Breathe in through your nose slowly... 2... 3... 4...
-    Hold gently... 2... 3... 4... 5... 6... 7...
-    Release through your mouth like a sigh... 2... 3... 4... 5... 6... 7... 8...
-    
-    Notice the space that just opened. This is your mental bandwidth returning.
-    I control my attention. Not the algorithm. Not the ping.
-    
-    End of Session One.""",
+    "Welcome to NeuroSync. Session One: Morning Mental Reset. Before your phone buzzes with emails, this is your space. Just twelve minutes. Just you. Find a comfortable position. Shoulders away from your ears. Breathe in through your nose slowly... two... three... four... Hold gently... two... three... four... five... six... seven... Release through your mouth... two... three... four... five... six... seven... eight... Notice the space that just opened. I control my attention. Not the algorithm. Not the ping. End of Session One.",
 
-    """NeuroSync. Session Two: Work Focus Calm.
-    
-    You're at your desk. Or about to start work. This is your ten-minute reset.
-    Sit comfortably. Feet flat on floor. Hands resting. 
-    We're shifting from reactive to responsive.
-    
-    Breathe in... 2... 3... 4...
-    Hold... 2... 3... 4... 5... 6... 7...
-    Out... 2... 3... 4... 5... 6... 7... 8...
-    
-    Now, visualize your attention as a spotlight.
-    Aim it at ONE thing. Single-tasking is your superpower.
-    
-    Single focus. Single task. Single breath. I choose depth over speed.
-    
-    End of Session Two.""",
+    "NeuroSync. Session Two: Work Focus Calm. You're at your desk. This is your ten-minute reset. Sit comfortably. Feet flat on floor. Breathe in... two... three... four... Hold... two... three... four... five... six... seven... Out... two... three... four... five... six... seven... eight... Visualize your attention as a spotlight. Aim it at ONE thing. Single focus. Single task. Single breath. I choose depth over speed. End of Session Two.",
 
-    """NeuroSync. Session Three: Evening Digital Detox.
-    
-    The workday is done. But your mind is still scrolling. Still plugged in.
-    This is your disconnection ritual. Fifteen minutes to unplug from digital and plug into yourself.
-    
-    Lie down or sit comfortably. This is permission to stop.
-    
-    Breathe in through nose... 2... 3... 4...
-    Hold... 2... 3... 4... 5... 6... 7...
-    Out through mouth... 2... 3... 4... 5... 6... 7... 8...
-    
-    Imagine a cable connecting you to the digital world.
-    With your next breath, gently unplug. Feel the freedom.
-    I disconnect to reconnect.
-    
-    End of Session Three."""
+    "NeuroSync. Session Three: Evening Digital Detox. The workday is done. But your mind is still scrolling. This is your disconnection ritual. Lie down comfortably. Breathe in through nose... two... three... four... Hold... two... three... four... five... six... seven... Out through mouth... two... three... four... five... six... seven... eight... Imagine unplugging from the digital world. Feel the freedom. I disconnect to reconnect. End of Session Three."
 ]
 
-# 4. Generar archivos de texto y Audio
+# 4. Generar archivos y audio
 for i, script_text in enumerate(scripts, 1):
-    # Limpiar texto para audio (una sola línea)
-    script_clean = script_text.replace('\n', ' ').replace('"', "'")
-    
     txt_file = f'session{i}.txt'
     mp3_file = f'assets/neurosync_0{i}_session.mp3'
     
-    with open(txt_file, 'w') as f:
-        f.write(script_clean)
+    # Escribir archivo de texto
+    print(f"📝 Creando {txt_file}...")
+    with open(txt_file, 'w', encoding='utf-8') as f:
+        f.write(script_text)
     
-    print(f"🎙️ Generando Audio {i}...")
-    # Ejecutar edge-tts
-    subprocess.run(['edge-tts', '--voice', 'en-US-AriaNeural', '--text-file', txt_file, '--write-media', mp3_file])
+    # Verificar que se escribió
+    if os.path.getsize(txt_file) == 0:
+        print(f"❌ ERROR: {txt_file} está vacío")
+        exit(1)
     
-    print(f"✅ Audio {i} creado: {mp3_file}")
+    print(f"🎙️ Generando audio {i} con edge-tts...")
+    
+    # Ejecutar edge-tts y esperar a que termine
+    result = subprocess.run([
+        'edge-tts',
+        '--voice', 'en-US-AriaNeural',
+        '--text-file', txt_file,
+        '--write-media', mp3_file
+    ], capture_output=True, text=True)
+    
+    if result.returncode != 0:
+        print(f"❌ Error en edge-tts: {result.stderr}")
+        exit(1)
+    
+    # Verificar que se creó el MP3
+    if os.path.exists(mp3_file):
+        file_size = os.path.getsize(mp3_file)
+        print(f"✅ Audio {i} creado: {mp3_file} ({file_size} bytes)")
+    else:
+        print(f"❌ ERROR: No se creó {mp3_file}")
+        exit(1)
 
 # 5. Generar PDF HTML
 pdf_html = f"""<!DOCTYPE html>
@@ -97,7 +74,22 @@ h2 {{ color: #764ba2; margin-top: 30px; }}
 </style>
 </head>
 <body>
-{config['pdf_content'].replace(chr(10), '<br>').replace('# ', '<h1>').replace('## ', '<h2>').replace('### ', '<h3>')}
+<h1>5-Minute Digital Anxiety Reset</h1>
+<h2>WHEN TO USE THIS</h2>
+<ul>
+<li>After notification overload</li>
+<li>Before important calls</li>
+<li>When chest feels tight from screens</li>
+</ul>
+<h2>PROTOCOL 1: The 4-7-8 Breath</h2>
+<ol>
+<li>Sit tall, shoulders down</li>
+<li>Inhale through nose for 4 counts</li>
+<li>Hold breath for 7 counts</li>
+<li>Exhale slowly for 8 counts</li>
+</ol>
+<h2>PROTOCOL 2: Anchor Phrase</h2>
+<p>Choose one phrase: "I control my attention." Repeat 10x.</p>
 </body>
 </html>"""
 
@@ -128,7 +120,7 @@ body{{font-family:sans-serif;margin:0;line-height:1.6}}
 </div>
 <div class="section">
 <h2>What You Get</h2>
-<div class="card"><h3> 3 Audio Sessions</h3><p>Morning, Work, Evening.</p></div>
+<div class="card"><h3>🎧 3 Audio Sessions</h3><p>Morning, Work, Evening.</p></div>
 <div class="card"><h3>📄 PDF Guide</h3><p>Emergency protocols.</p></div>
 </div>
 </body>
@@ -137,3 +129,5 @@ body{{font-family:sans-serif;margin:0;line-height:1.6}}
 with open('index.html', 'w') as f:
     f.write(landing_html)
 print("🌐 Landing page generada")
+
+print("\n✅ ¡TODO GENERADO EXITOSAMENTE!")
