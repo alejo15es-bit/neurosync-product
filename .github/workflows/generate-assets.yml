@@ -25,15 +25,6 @@ jobs:
       - name: Run generation script
         run: python generate.py
       
-      - name: Generate audio files
-        run: |
-          edge-tts --voice en-US-AriaNeural --text-file session1.txt --write-media assets/neurosync_01_morning.mp3
-          edge-tts --voice en-US-AriaNeural --text-file session2.txt --write-media assets/neurosync_02_work.mp3
-          edge-tts --voice en-US-AriaNeural --text-file session3.txt --write-media assets/neurosync_03_evening.mp3
-      
-      - name: Generate PDF
-        run: wkhtmltopdf guide.html assets/neurosync_guide.pdf
-      
       - name: Upload all assets
         uses: actions/upload-artifact@v4
         with:
@@ -53,5 +44,4 @@ jobs:
       - name: Show results
         run: |
           echo "✅ ¡Generación completada!"
-          echo "📦 Assets disponibles para descarga"
           echo "🌐 Landing: https://${{ github.repository_owner }}.github.io/$(basename ${{ github.repository }})"
