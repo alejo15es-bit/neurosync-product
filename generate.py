@@ -20,6 +20,9 @@ for i, session in enumerate(config['sessions'], 1):
         f.write(script_text)
     print(f"📝 Session {i} preparado: {session['title']}")
 
+# CORRECCIÓN: Preparar contenido PDF fuera del f-string
+pdf_content_formatted = config['pdf_content'].replace('\n', '<br>')
+
 # Crear HTML para PDF
 pdf_html = f"""<!DOCTYPE html>
 <html>
@@ -34,7 +37,7 @@ h2 {{ color: #764ba2; margin-top: 30px; }}
 </style>
 </head>
 <body>
-{config['pdf_content'].replace('\\n', '<br>')}
+{pdf_content_formatted}
 </body>
 </html>"""
 
